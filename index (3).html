@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PC Agropecuarios — Pedidos</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --azul:#1a237e;--azul2:#283593;--azul3:#e8eaf6;--azulclaro:#5c6bc0;
+  --gris:#f4f5f9;--borde:#dde1f0;--texto:#1a1a2e;--muted:#6b7280;
+  --white:#fff;--verde:#1b5e20;--verde2:#e8f5e9;--verdeclaro:#2e7d32;
+  --rojo:#b71c1c;--rojo2:#ffebee;--naranja:#e65100;--naranja2:#fff3e0;
+}
+body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--gris);color:var(--texto);min-height:100vh;font-size:14px}
+
+.header{background:linear-gradient(135deg,var(--azul) 0%,var(--azulclaro) 100%);padding:12px 20px;display:flex;align-items:center;gap:14px;position:sticky;top:0;z-index:50}
+.logo-box{background:rgba(255,255,255,.15);border-radius:10px;padding:6px 12px;display:flex;align-items:center;gap:8px}
+.logo-pc{font-size:22px;font-weight:800;color:#fff;letter-spacing:-1px}
+.logo-sub{font-size:10px;color:rgba(255,255,255,.8);font-weight:600;text-transform:uppercase;letter-spacing:.5px;line-height:1.2}
+.header-info{flex:1}
+.header-title{color:#fff;font-size:15px;font-weight:700}
+.header-sub{color:rgba(255,255,255,.7);font-size:11px;margin-top:1px}
+.header-clock{color:rgba(255,255,255,.95);font-size:13px;font-weight:700;text-align:right;line-height:1.5}
+.live-dot{display:flex;align-items:center;gap:4px;color:rgba(255,255,255,.75);font-size:10px;font-weight:600;margin-top:2px;justify-content:flex-end}
+.dot{width:6px;height:6px;border-radius:50%;background:#69f0ae;animation:pulse 1.5s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+
+.tabs{display:flex;background:var(--white);border-bottom:2px solid var(--borde);position:sticky;top:64px;z-index:40}
+.tab{flex:1;padding:12px 8px;cursor:pointer;font-size:13px;font-weight:600;color:var(--muted);border-bottom:3px solid transparent;margin-bottom:-2px;text-align:center;transition:.2s}
+.tab.active{color:var(--azul);border-bottom-color:var(--azul);background:var(--azul3)}
+.tab:hover:not(.active){background:#f9faff}
+
+.panel{display:none;padding:16px;max-width:680px;margin:0 auto}
+.panel.active{display:block}
+
+.card{background:var(--white);border-radius:12px;border:1px solid var(--borde);padding:16px;margin-bottom:14px}
+.card-title{font-size:11px;font-weight:700;color:var(--azul);text-transform:uppercase;letter-spacing:.8px;margin-bottom:12px}
+
+label{font-size:12px;font-weight:600;color:var(--texto);display:block;margin-bottom:4px;margin-top:10px}
+label:first-of-type{margin-top:0}
+input,select,textarea{width:100%;padding:9px 12px;border:1.5px solid var(--borde);border-radius:8px;font-size:13px;font-family:'Plus Jakarta Sans',sans-serif;color:var(--texto);background:var(--white);transition:.2s}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azulclaro);box-shadow:0 0 0 3px rgba(92,107,192,.12)}
+textarea{resize:vertical;min-height:55px}
+
+.btn{padding:9px 16px;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;transition:.15s;font-family:'Plus Jakarta Sans',sans-serif;display:inline-flex;align-items:center;gap:5px}
+.btn-primary{background:var(--azul);color:#fff}
+.btn-primary:hover{background:var(--azul2)}
+.btn-primary:active{transform:scale(.97)}
+.btn-danger{background:var(--rojo);color:#fff;padding:5px 10px;font-size:12px}
+.btn-success{background:var(--verdeclaro);color:#fff}
+.btn-success:hover{background:var(--verde)}
+.btn-outline{background:var(--white);color:var(--azul);border:1.5px solid var(--azul);padding:7px 14px}
+.btn-sm{padding:5px 10px;font-size:11px}
+.btn-excel{background:#1b5e20;color:#fff}
+.btn-excel:hover{background:#145214}
+
+.fecha-pill{background:var(--azul3);border-radius:8px;padding:10px 14px;display:flex;align-items:center;gap:10px}
+.fecha-pill .fd{font-size:13px;font-weight:700;color:var(--azul)}
+.fecha-pill .fh{font-size:11px;color:var(--muted);font-weight:500;margin-top:1px}
+
+.prod-row{display:flex;gap:8px;align-items:flex-start;margin-bottom:8px;background:var(--gris);border-radius:8px;padding:8px 10px}
+.prod-num{font-size:12px;font-weight:800;color:var(--azulclaro);min-width:18px;padding-top:10px}
+.prod-row textarea{flex:1;min-height:40px;font-size:13px;border-radius:6px;padding:8px 10px;resize:none;background:var(--white)}
+.add-link{color:var(--azulclaro);font-size:12px;cursor:pointer;margin-top:6px;display:inline-flex;align-items:center;gap:4px;font-weight:700;padding:7px 12px;background:var(--azul3);border-radius:8px}
+.add-link:hover{background:#d1d5f5}
+
+.badge{display:inline-block;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:700}
+.badge-pend{background:var(--naranja2);color:var(--naranja)}
+.badge-fact{background:var(--verde2);color:var(--verdeclaro)}
+
+.pedido-card{background:var(--white);border-radius:12px;border:1px solid var(--borde);border-left:4px solid var(--azulclaro);padding:14px;margin-bottom:10px}
+.pedido-card.facturado{border-left-color:var(--verdeclaro)}
+.pedido-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;gap:8px}
+.pedido-cliente{font-weight:700;font-size:14px}
+.pedido-meta{font-size:11px;color:var(--muted);margin-top:3px;line-height:1.6}
+.pedido-prods{background:var(--gris);border-radius:8px;padding:8px 10px;margin-top:8px;font-size:12px}
+.prod-item{padding:3px 0;border-bottom:1px solid var(--borde);line-height:1.5}
+.prod-item:last-child{border-bottom:none}
+.obs-box{font-size:11px;color:var(--muted);margin-top:6px;font-style:italic;background:var(--azul3);padding:6px 10px;border-radius:6px}
+.empty{text-align:center;padding:40px;color:var(--muted);font-size:13px}
+
+.login-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;z-index:200}
+.login-box{background:var(--white);border-radius:16px;padding:28px;width:300px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.25)}
+.login-logo{font-size:32px;font-weight:800;color:var(--azul);margin-bottom:4px}
+.login-err{color:var(--rojo);font-size:11px;margin-top:6px;display:none}
+
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px}
+.stat{background:var(--white);border-radius:10px;border:1px solid var(--borde);padding:12px;text-align:center}
+.stat-n{font-size:24px;font-weight:800;color:var(--azul)}
+.stat-l{font-size:10px;color:var(--muted);margin-top:1px;font-weight:600}
+.stat.verde .stat-n{color:var(--verdeclaro)}
+.stat.naranja .stat-n{color:var(--naranja)}
+
+.acciones{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;align-items:center}
+.acciones select{flex:1;min-width:110px}
+.vend-tag{display:inline-block;background:var(--azul3);color:var(--azul);padding:2px 8px;border-radius:10px;font-size:11px;font-weight:700;margin-right:4px}
+
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(60px);background:var(--verdeclaro);color:#fff;padding:11px 22px;border-radius:12px;font-size:13px;font-weight:600;z-index:999;opacity:0;transition:.3s;pointer-events:none;white-space:nowrap}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+.loading{display:flex;align-items:center;justify-content:center;padding:30px;gap:10px;color:var(--muted);font-size:13px}
+.spinner{width:20px;height:20px;border:2px solid var(--borde);border-top-color:var(--azulclaro);border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+.conexion-bar{background:#fff3e0;border-bottom:1px solid #ffcc80;padding:6px 16px;font-size:12px;color:#e65100;text-align:center;display:none}
+.conexion-bar.visible{display:block}
+</style>
+</head>
+<body>
+
+<!-- BARRA CONEXIÓN -->
+<div class="conexion-bar" id="conexionBar">⚠️ Sin conexión — Los pedidos se guardarán cuando vuelva internet</div>
+
+<!-- LOGIN -->
+<div class="login-overlay" id="loginOverlay" style="display:none">
+  <div class="login-box">
+    <div class="login-logo">🐴 PC</div>
+    <div style="font-size:13px;font-weight:700;color:var(--azul);margin-bottom:2px">Panel de Facturación</div>
+    <div style="font-size:11px;color:var(--muted);margin-bottom:18px">Insumos Agropecuarios</div>
+    <label>Usuario</label>
+    <input type="text" id="loginUser" placeholder="usuario" autocomplete="username">
+    <label>Contraseña</label>
+    <input type="password" id="loginPass" placeholder="contraseña" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()">
+    <div class="login-err" id="loginErr">Usuario o contraseña incorrectos</div>
+    <br>
+    <button class="btn btn-primary" style="width:100%;justify-content:center;margin-top:10px" onclick="doLogin()">Ingresar →</button>
+    <button class="btn btn-outline" style="width:100%;justify-content:center;margin-top:8px" onclick="document.getElementById('loginOverlay').style.display='none'">Cancelar</button>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="logo-box">
+    <div class="logo-pc">PC</div>
+    <div class="logo-sub">Insumos<br>Agropecuarios</div>
+  </div>
+  <div class="header-info">
+    <div class="header-title">Sistema de Pedidos</div>
+    <div class="header-sub" id="headerVend">Seleccione su nombre</div>
+  </div>
+  <div>
+    <div class="header-clock" id="reloj">--:--:--</div>
+    <div class="live-dot"><div class="dot"></div> En vivo</div>
+  </div>
+</div>
+
+<!-- TABS -->
+<div class="tabs">
+  <div class="tab active" id="tab-vend" onclick="switchTab('vendedor')">📋 Ingresar Pedido</div>
+  <div class="tab" id="tab-fact" onclick="openFact()">🔒 Facturación</div>
+</div>
+
+<!-- PANEL VENDEDOR -->
+<div class="panel active" id="panel-vendedor">
+
+  <div class="card">
+    <div class="card-title">👤 Vendedor</div>
+    <select id="vendNombre" onchange="updateHeaderVend()">
+      <option value="">— Seleccione su nombre —</option>
+      <option>Luis Pambi</option>
+      <option>Roberth Espinoza</option>
+      <option>Dennis Valdiviezo</option>
+      <option>Zachary Peralta</option>
+    </select>
+    <div style="margin-top:12px">
+      <div class="card-title" style="margin-bottom:8px">📅 Fecha y hora del pedido</div>
+      <div class="fecha-pill">
+        <div style="font-size:20px">🗓</div>
+        <div>
+          <div class="fd" id="fechaMostrar">—</div>
+          <div class="fh" id="horaMostrar">—</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">🏪 Cliente</div>
+    <label>Nombre del cliente</label>
+    <input type="text" id="clienteNom" placeholder="Ej: Hacienda El Rosal">
+    <label>Teléfono (opcional)</label>
+    <input type="tel" id="clienteTel" placeholder="0999...">
+    <label>Ciudad / Sector</label>
+    <input type="text" id="clienteCiudad" placeholder="Ej: Loja, Catamayo...">
+  </div>
+
+  <div class="card">
+    <div class="card-title">📦 Productos del pedido</div>
+    <div style="font-size:11px;color:var(--muted);margin-bottom:10px;line-height:1.5">Escriba libremente cada ítem con cantidad y descripción.<br>Ej: <em>"5 sacos concentrado porcino 40kg"</em> &nbsp;|&nbsp; <em>"10 frascos vitamina B12"</em></div>
+    <div id="productosContainer"></div>
+    <span class="add-link" onclick="addProducto()">＋ Añadir producto</span>
+  </div>
+
+  <div class="card">
+    <div class="card-title">📝 Observaciones</div>
+    <textarea id="obsTexto" placeholder="Instrucciones de entrega, horario, notas especiales..."></textarea>
+  </div>
+
+  <button class="btn btn-primary" style="width:100%;justify-content:center;font-size:14px;padding:14px;margin-bottom:24px" onclick="enviarPedido()" id="btnEnviar">
+    ✅ Enviar Pedido
+  </button>
+</div>
+
+<!-- PANEL FACTURACIÓN -->
+<div class="panel" id="panel-facturacion">
+  <div class="stats" id="statsBox">
+    <div class="stat"><div class="stat-n">—</div><div class="stat-l">Total</div></div>
+    <div class="stat naranja"><div class="stat-n">—</div><div class="stat-l">Pendientes</div></div>
+    <div class="stat verde"><div class="stat-n">—</div><div class="stat-l">Facturados</div></div>
+  </div>
+  <div class="acciones">
+    <select id="filtroVend" onchange="renderPedidos()">
+      <option value="">Todos los vendedores</option>
+      <option>Luis Pambi</option>
+      <option>Roberth Espinoza</option>
+      <option>Dennis Valdiviezo</option>
+      <option>Zachary Peralta</option>
+    </select>
+    <select id="filtroEst" onchange="renderPedidos()">
+      <option value="">Todos los estados</option>
+      <option value="Pendiente">Pendiente</option>
+      <option value="Facturado">Facturado</option>
+    </select>
+    <button class="btn btn-excel" onclick="exportarExcel()">⬇ Excel</button>
+  </div>
+  <div id="listaPedidos"><div class="loading"><div class="spinner"></div> Cargando pedidos...</div></div>
+</div>
+
+<!-- FIREBASE SDK -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-app.js";
+  import {
+    getFirestore, collection, addDoc, onSnapshot,
+    doc, updateDoc, deleteDoc, query, orderBy, serverTimestamp
+  } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-firestore.js";
+
+  // ── CONFIGURACIÓN FIREBASE ──
+  const firebaseConfig = {
+    apiKey: "AIzaSyCDS9l5_XWj1X0moxYUj_ENowkUFCWQK9M",
+    authDomain: "pc-agropecuarios.firebaseapp.com",
+    projectId: "pc-agropecuarios",
+    storageBucket: "pc-agropecuarios.firebasestorage.app",
+    messagingSenderId: "789657430393",
+    appId: "1:789657430393:web:72ded129e98aaf0ef1a7a8"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+  const pedidosCol = collection(db, "pedidos");
+
+  // Exponer funciones al ámbito global
+  window._db = db;
+  window._col = pedidosCol;
+  window._addDoc = addDoc;
+  window._updateDoc = updateDoc;
+  window._deleteDoc = deleteDoc;
+  window._doc = doc;
+  window._query = query;
+  window._orderBy = orderBy;
+  window._onSnapshot = onSnapshot;
+  window._serverTimestamp = serverTimestamp;
+  window._firebaseReady = true;
+
+  // Escucha en tiempo real
+  const q = query(pedidosCol, orderBy("timestamp", "desc"));
+  onSnapshot(q, (snapshot) => {
+    window._pedidos = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+    if (document.getElementById('panel-facturacion').classList.contains('active')) {
+      window.renderPedidos();
+    }
+  }, (err) => {
+    console.error("Error escuchando:", err);
+  });
+
+  window.dispatchEvent(new Event('firebaseReady'));
+</script>
+
+<script>
+// ── ESTADO ──
+const USERS = { admin: 'factura2024', facturacion: 'pc2024' };
+let autenticado = false;
+window._pedidos = [];
+let fechaHoraActual = {};
+
+// ── RELOJ ──
+function tickReloj() {
+  const now = new Date();
+  const dias = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
+  const meses = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  const h = String(now.getHours()).padStart(2,'0');
+  const m = String(now.getMinutes()).padStart(2,'0');
+  const s = String(now.getSeconds()).padStart(2,'0');
+  document.getElementById('reloj').textContent = `${h}:${m}:${s}`;
+  document.getElementById('fechaMostrar').textContent = `${dias[now.getDay()]} ${now.getDate()} de ${meses[now.getMonth()]} de ${now.getFullYear()}`;
+  document.getElementById('horaMostrar').textContent = `Hora de registro: ${h}:${m}`;
+  fechaHoraActual = {
+    fecha: `${now.getDate().toString().padStart(2,'0')}/${(now.getMonth()+1).toString().padStart(2,'0')}/${now.getFullYear()}`,
+    hora: `${h}:${m}`,
+    stamp: now.toLocaleString('es-EC')
+  };
+}
+setInterval(tickReloj, 1000);
+tickReloj();
+
+// ── CONEXIÓN ──
+window.addEventListener('online', () => document.getElementById('conexionBar').classList.remove('visible'));
+window.addEventListener('offline', () => document.getElementById('conexionBar').classList.add('visible'));
+
+// ── INIT ──
+window.addEventListener('load', () => { addProducto(); });
+document.getElementById('vendNombre').addEventListener('change', updateHeaderVend);
+
+function updateHeaderVend() {
+  const v = document.getElementById('vendNombre').value;
+  document.getElementById('headerVend').textContent = v || 'Seleccione su nombre';
+}
+
+// ── PRODUCTOS ──
+function addProducto() {
+  const c = document.getElementById('productosContainer');
+  const idx = c.children.length + 1;
+  const row = document.createElement('div');
+  row.className = 'prod-row';
+  row.innerHTML = `
+    <span class="prod-num">${idx}</span>
+    <textarea placeholder="Ej: 3 sacos concentrado porcino 40kg..." rows="2"></textarea>
+    <button class="btn btn-danger btn-sm" onclick="removeProducto(this)" style="margin-top:4px">✕</button>
+  `;
+  c.appendChild(row);
+}
+
+function removeProducto(btn) {
+  btn.parentElement.remove();
+  renumerarProductos();
+}
+
+function renumerarProductos() {
+  document.querySelectorAll('#productosContainer .prod-num').forEach((n, i) => { n.textContent = i + 1; });
+}
+
+// ── ENVIAR PEDIDO ──
+async function enviarPedido() {
+  const vend = document.getElementById('vendNombre').value;
+  const cliente = document.getElementById('clienteNom').value.trim();
+  const tel = document.getElementById('clienteTel').value.trim();
+  const ciudad = document.getElementById('clienteCiudad').value.trim();
+  const obs = document.getElementById('obsTexto').value.trim();
+
+  if (!vend) { toast('Seleccione su nombre primero', 'error'); return; }
+  if (!cliente) { toast('Ingrese el nombre del cliente', 'error'); return; }
+
+  const textos = [...document.querySelectorAll('#productosContainer textarea')]
+    .map(t => t.value.trim()).filter(Boolean);
+  if (textos.length === 0) { toast('Añada al menos un producto', 'error'); return; }
+
+  if (!window._firebaseReady) { toast('Conectando con la base de datos...', 'error'); return; }
+
+  const btn = document.getElementById('btnEnviar');
+  btn.disabled = true;
+  btn.textContent = '⏳ Enviando...';
+
+  try {
+    await window._addDoc(window._col, {
+      fecha: fechaHoraActual.fecha,
+      hora: fechaHoraActual.hora,
+      stamp: fechaHoraActual.stamp,
+      timestamp: window._serverTimestamp(),
+      vendedor: vend,
+      cliente, tel, ciudad,
+      productos: textos,
+      obs,
+      estado: 'Pendiente'
+    });
+
+    toast('✅ Pedido enviado correctamente');
+    document.getElementById('clienteNom').value = '';
+    document.getElementById('clienteTel').value = '';
+    document.getElementById('clienteCiudad').value = '';
+    document.getElementById('obsTexto').value = '';
+    document.getElementById('productosContainer').innerHTML = '';
+    addProducto();
+  } catch (e) {
+    console.error(e);
+    toast('Error al enviar. Verifique su conexión', 'error');
+  }
+
+  btn.disabled = false;
+  btn.textContent = '✅ Enviar Pedido';
+}
+
+// ── LOGIN ──
+function openFact() {
+  if (autenticado) { switchTab('facturacion'); return; }
+  document.getElementById('loginUser').value = '';
+  document.getElementById('loginPass').value = '';
+  document.getElementById('loginErr').style.display = 'none';
+  document.getElementById('loginOverlay').style.display = 'flex';
+  setTimeout(() => document.getElementById('loginUser').focus(), 100);
+}
+
+function doLogin() {
+  const u = document.getElementById('loginUser').value.trim();
+  const p = document.getElementById('loginPass').value;
+  if (USERS[u] && USERS[u] === p) {
+    autenticado = true;
+    document.getElementById('loginOverlay').style.display = 'none';
+    switchTab('facturacion');
+  } else {
+    document.getElementById('loginErr').style.display = 'block';
+  }
+}
+
+// ── TABS ──
+function switchTab(t) {
+  document.getElementById('panel-vendedor').classList.remove('active');
+  document.getElementById('panel-facturacion').classList.remove('active');
+  document.getElementById('tab-vend').classList.remove('active');
+  document.getElementById('tab-fact').classList.remove('active');
+  document.getElementById('panel-' + t).classList.add('active');
+  document.getElementById(t === 'vendedor' ? 'tab-vend' : 'tab-fact').classList.add('active');
+  if (t === 'facturacion') renderPedidos();
+}
+
+// ── RENDER FACTURACIÓN ──
+function renderPedidos() {
+  const pedidos = window._pedidos || [];
+  const filtV = document.getElementById('filtroVend').value;
+  const filtE = document.getElementById('filtroEst').value;
+
+  const filtered = pedidos.filter(p => {
+    if (filtV && p.vendedor !== filtV) return false;
+    if (filtE && p.estado !== filtE) return false;
+    return true;
+  });
+
+  const total = pedidos.length;
+  const pend = pedidos.filter(p => p.estado === 'Pendiente').length;
+  const fact = pedidos.filter(p => p.estado === 'Facturado').length;
+
+  document.getElementById('statsBox').innerHTML = `
+    <div class="stat"><div class="stat-n">${total}</div><div class="stat-l">Total</div></div>
+    <div class="stat naranja"><div class="stat-n">${pend}</div><div class="stat-l">Pendientes</div></div>
+    <div class="stat verde"><div class="stat-n">${fact}</div><div class="stat-l">Facturados</div></div>
+  `;
+
+  const lista = document.getElementById('listaPedidos');
+  if (filtered.length === 0) {
+    lista.innerHTML = `<div class="empty">📭<br><br>No hay pedidos${filtV || filtE ? ' con ese filtro' : ' todavía'}</div>`;
+    return;
+  }
+
+  lista.innerHTML = filtered.map(p => `
+    <div class="pedido-card ${p.estado === 'Facturado' ? 'facturado' : ''}">
+      <div class="pedido-head">
+        <div style="flex:1;min-width:0">
+          <div class="pedido-cliente">${p.cliente}${p.ciudad ? ' <span style="font-weight:400;font-size:12px;color:var(--muted)">— ' + p.ciudad + '</span>' : ''}</div>
+          <div class="pedido-meta">
+            <span class="vend-tag">${p.vendedor}</span><br>
+            📅 ${p.fecha} &nbsp; ⏱ ${p.hora}
+            ${p.tel ? '&nbsp; 📞 ' + p.tel : ''}
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex-shrink:0">
+          <span class="badge ${p.estado === 'Pendiente' ? 'badge-pend' : 'badge-fact'}">${p.estado}</span>
+          ${p.estado === 'Pendiente'
+            ? `<button class="btn btn-success btn-sm" onclick="marcarFacturado('${p.id}')">✓ Facturar</button>`
+            : `<button class="btn btn-outline btn-sm" onclick="marcarPendiente('${p.id}')">↩ Revertir</button>`
+          }
+          <button class="btn btn-danger btn-sm" onclick="eliminarPedido('${p.id}')">🗑</button>
+        </div>
+      </div>
+      <div class="pedido-prods">
+        ${(p.productos || []).map((pr, i) => `<div class="prod-item"><span style="color:var(--azulclaro);font-weight:700">${i + 1}.</span> ${pr}</div>`).join('')}
+      </div>
+      ${p.obs ? `<div class="obs-box">💬 ${p.obs}</div>` : ''}
+    </div>
+  `).join('');
+}
+
+async function marcarFacturado(id) {
+  try {
+    await window._updateDoc(window._doc(window._db, 'pedidos', id), { estado: 'Facturado' });
+    toast('Marcado como Facturado');
+  } catch (e) { toast('Error al actualizar', 'error'); }
+}
+
+async function marcarPendiente(id) {
+  try {
+    await window._updateDoc(window._doc(window._db, 'pedidos', id), { estado: 'Pendiente' });
+  } catch (e) { toast('Error al actualizar', 'error'); }
+}
+
+async function eliminarPedido(id) {
+  if (!confirm('¿Eliminar este pedido definitivamente?')) return;
+  try {
+    await window._deleteDoc(window._doc(window._db, 'pedidos', id));
+    toast('Pedido eliminado');
+  } catch (e) { toast('Error al eliminar', 'error'); }
+}
+
+// ── EXPORTAR CSV/EXCEL ──
+function exportarExcel() {
+  const pedidos = window._pedidos || [];
+  const rows = [['Fecha','Hora','Vendedor','Cliente','Teléfono','Ciudad','Producto','Observaciones','Estado']];
+  pedidos.forEach(p => {
+    (p.productos || []).forEach((pr, i) => {
+      rows.push([
+        p.fecha, p.hora, p.vendedor, p.cliente,
+        p.tel || '', p.ciudad || '', pr,
+        i === 0 ? (p.obs || '') : '',
+        p.estado
+      ]);
+    });
+  });
+  const csv = rows.map(r => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\n');
+  const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `pedidos_PC_${new Date().toLocaleDateString('es-EC').replace(/\//g,'-')}.csv`;
+  a.click();
+  toast('📥 Exportando pedidos...');
+}
+
+// ── TOAST ──
+function toast(msg, tipo = 'ok') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.background = tipo === 'error' ? '#b71c1c' : 'var(--verdeclaro)';
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+// Exponer funciones globales
+window.renderPedidos = renderPedidos;
+window.marcarFacturado = marcarFacturado;
+window.marcarPendiente = marcarPendiente;
+window.eliminarPedido = eliminarPedido;
+window.exportarExcel = exportarExcel;
+window.doLogin = doLogin;
+window.openFact = openFact;
+window.switchTab = switchTab;
+window.addProducto = addProducto;
+window.removeProducto = removeProducto;
+window.enviarPedido = enviarPedido;
+window.updateHeaderVend = updateHeaderVend;
+window.toast = toast;
+</script>
+
+</body>
+</html>
