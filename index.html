@@ -183,8 +183,6 @@ textarea{resize:vertical;min-height:55px}
     <div class="card-title">🏪 Cliente</div>
     <label>Nombre del cliente</label>
     <input type="text" id="clienteNom" placeholder="Ej: Hacienda El Rosal">
-    <label>Teléfono (opcional)</label>
-    <input type="tel" id="clienteTel" placeholder="0999...">
     <label>Ciudad / Sector</label>
     <input type="text" id="clienteCiudad" placeholder="Ej: Loja, Catamayo...">
   </div>
@@ -347,7 +345,6 @@ function renumerarProductos() {
 async function enviarPedido() {
   const vend = document.getElementById('vendNombre').value;
   const cliente = document.getElementById('clienteNom').value.trim();
-  const tel = document.getElementById('clienteTel').value.trim();
   const ciudad = document.getElementById('clienteCiudad').value.trim();
   const obs = document.getElementById('obsTexto').value.trim();
 
@@ -371,7 +368,7 @@ async function enviarPedido() {
       stamp: fechaHoraActual.stamp,
       timestamp: window._serverTimestamp(),
       vendedor: vend,
-      cliente, tel, ciudad,
+      cliente, ciudad,
       productos: textos,
       obs,
       estado: 'Pendiente'
@@ -379,7 +376,6 @@ async function enviarPedido() {
 
     toast('✅ Pedido enviado correctamente');
     document.getElementById('clienteNom').value = '';
-    document.getElementById('clienteTel').value = '';
     document.getElementById('clienteCiudad').value = '';
     document.getElementById('obsTexto').value = '';
     document.getElementById('productosContainer').innerHTML = '';
@@ -462,7 +458,6 @@ function renderPedidos() {
           <div class="pedido-meta">
             <span class="vend-tag">${p.vendedor}</span><br>
             📅 ${p.fecha} &nbsp; ⏱ ${p.hora}
-            ${p.tel ? '&nbsp; 📞 ' + p.tel : ''}
           </div>
         </div>
         <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex-shrink:0">
@@ -506,25 +501,55 @@ async function eliminarPedido(id) {
 // ── EXPORTAR CSV/EXCEL ──
 function exportarExcel() {
   const pedidos = window._pedidos || [];
-  const rows = [['Fecha','Hora','Vendedor','Cliente','Teléfono','Ciudad','Producto','Observaciones','Estado']];
+  if (pedidos.length === 0) { toast('No hay pedidos para exportar', 'error'); return; }
+
+  // Cabecera principal
+  const cabecera = [
+    'N° Pedido','Fecha','Hora','Vendedor',
+    'Cliente','Ciudad',
+    'N° Item','Producto / Detalle',
+    'Observaciones','Estado'
+  ];
+
+  const rows = [cabecera];
+  let numPedido = pedidos.length;
+
   pedidos.forEach(p => {
-    (p.productos || []).forEach((pr, i) => {
+    const prods = p.productos || [];
+    prods.forEach((pr, i) => {
       rows.push([
-        p.fecha, p.hora, p.vendedor, p.cliente,
-        p.tel || '', p.ciudad || '', pr,
-        i === 0 ? (p.obs || '') : '',
-        p.estado
+        numPedido,                        // N° Pedido
+        p.fecha || '',                    // Fecha
+        p.hora  || '',                    // Hora
+        p.vendedor || '',                 // Vendedor
+        p.cliente  || '',                 // Cliente
+        p.ciudad   || '',                 // Ciudad
+        i + 1,                            // N° Item dentro del pedido
+        pr,                               // Producto / Detalle (texto libre)
+        i === 0 ? (p.obs || '') : '',     // Observaciones solo en primera fila
+        p.estado || ''                    // Estado
       ]);
     });
+    numPedido--;
   });
-  const csv = rows.map(r => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\n');
+
+  // Convertir a CSV con separador de punto y coma para mejor compatibilidad con Excel en español
+  const csv = rows.map(r =>
+    r.map(c => {
+      const val = String(c).replace(/"/g, '""');
+      return `"${val}"`;
+    }).join(';')
+  ).join('\r\n');
+
   const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = `pedidos_PC_${new Date().toLocaleDateString('es-EC').replace(/\//g,'-')}.csv`;
+  const hoy = new Date().toLocaleDateString('es-EC').replace(/\//g,'-');
+  a.download = `Pedidos_PC_Agropecuarios_${hoy}.csv`;
   a.click();
-  toast('📥 Exportando pedidos...');
+  URL.revokeObjectURL(url);
+  toast(`📥 ${pedidos.length} pedidos exportados`);
 }
 
 // ── TOAST ──
@@ -554,3 +579,4 @@ window.toast = toast;
 
 </body>
 </html>
+
