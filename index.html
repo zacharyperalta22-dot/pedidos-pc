@@ -229,6 +229,9 @@ textarea{resize:vertical;min-height:55px}
   <div id="listaPedidos"><div class="loading"><div class="spinner"></div> Cargando pedidos...</div></div>
 </div>
 
+<!-- SheetJS para exportar XLSX real -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
 <!-- FIREBASE SDK -->
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-app.js";
@@ -498,58 +501,72 @@ async function eliminarPedido(id) {
   } catch (e) { toast('Error al eliminar', 'error'); }
 }
 
-// ── EXPORTAR CSV/EXCEL ──
+// ── EXPORTAR XLSX CON HOJA POR VENDEDOR ──
 function exportarExcel() {
   const pedidos = window._pedidos || [];
   if (pedidos.length === 0) { toast('No hay pedidos para exportar', 'error'); return; }
 
-  // Cabecera principal
-  const cabecera = [
-    'N° Pedido','Fecha','Hora','Vendedor',
-    'Cliente','Ciudad',
-    'N° Item','Producto / Detalle',
-    'Observaciones','Estado'
-  ];
+  if (typeof XLSX === 'undefined') { toast('Cargando librería, intente en 3 segundos...', 'error'); return; }
 
-  const rows = [cabecera];
-  let numPedido = pedidos.length;
+  const cabecera = ['N° Pedido','Fecha','Hora','Cliente','Ciudad','N° Item','Producto / Detalle','Observaciones','Estado'];
 
+  const vendedores = ['Luis Pambi','Roberth Espinoza','Dennis Valdiviezo','Zachary Peralta'];
+  const wb = XLSX.utils.book_new();
+
+  // Hoja "Todos" con todos los pedidos
+  const todosRows = [['N° Pedido','Fecha','Hora','Vendedor','Cliente','Ciudad','N° Item','Producto / Detalle','Observaciones','Estado']];
+  let numGlobal = pedidos.length;
   pedidos.forEach(p => {
-    const prods = p.productos || [];
-    prods.forEach((pr, i) => {
-      rows.push([
-        numPedido,                        // N° Pedido
-        p.fecha || '',                    // Fecha
-        p.hora  || '',                    // Hora
-        p.vendedor || '',                 // Vendedor
-        p.cliente  || '',                 // Cliente
-        p.ciudad   || '',                 // Ciudad
-        i + 1,                            // N° Item dentro del pedido
-        pr,                               // Producto / Detalle (texto libre)
-        i === 0 ? (p.obs || '') : '',     // Observaciones solo en primera fila
-        p.estado || ''                    // Estado
+    (p.productos || []).forEach((pr, i) => {
+      todosRows.push([
+        numGlobal, p.fecha||'', p.hora||'', p.vendedor||'',
+        p.cliente||'', p.ciudad||'', i+1, pr,
+        i===0?(p.obs||''):'', p.estado||''
       ]);
     });
-    numPedido--;
+    numGlobal--;
+  });
+  const wsTodos = XLSX.utils.aoa_to_sheet(todosRows);
+  aplicarEstiloHoja(wsTodos, todosRows);
+  XLSX.utils.book_append_sheet(wb, wsTodos, 'Todos');
+
+  // Una hoja por vendedor
+  vendedores.forEach(vend => {
+    const filtrados = pedidos.filter(p => p.vendedor === vend);
+    if (filtrados.length === 0) return;
+
+    const rows = [cabecera];
+    let num = filtrados.length;
+    filtrados.forEach(p => {
+      (p.productos || []).forEach((pr, i) => {
+        rows.push([
+          num, p.fecha||'', p.hora||'',
+          p.cliente||'', p.ciudad||'', i+1, pr,
+          i===0?(p.obs||''):'', p.estado||''
+        ]);
+      });
+      num--;
+    });
+
+    const ws = XLSX.utils.aoa_to_sheet(rows);
+    aplicarEstiloHoja(ws, rows);
+    // Nombre de hoja corto (Excel máx 31 chars)
+    const nombreHoja = vend.split(' ')[0]; // solo primer nombre
+    XLSX.utils.book_append_sheet(wb, ws, nombreHoja);
   });
 
-  // Convertir a CSV con separador de punto y coma para mejor compatibilidad con Excel en español
-  const csv = rows.map(r =>
-    r.map(c => {
-      const val = String(c).replace(/"/g, '""');
-      return `"${val}"`;
-    }).join(';')
-  ).join('\r\n');
-
-  const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
   const hoy = new Date().toLocaleDateString('es-EC').replace(/\//g,'-');
-  a.download = `Pedidos_PC_Agropecuarios_${hoy}.csv`;
-  a.click();
-  URL.revokeObjectURL(url);
-  toast(`📥 ${pedidos.length} pedidos exportados`);
+  XLSX.writeFile(wb, `Pedidos_PC_Agropecuarios_${hoy}.xlsx`);
+  toast(`📥 Exportado con ${new Set(pedidos.map(p=>p.vendedor)).size} hojas de vendedores`);
+}
+
+function aplicarEstiloHoja(ws, rows) {
+  // Ancho de columnas
+  const anchos = [10, 12, 8, 16, 16, 8, 50, 30, 12];
+  ws['!cols'] = anchos.map(w => ({ wch: w }));
+
+  // Congelar primera fila
+  ws['!freeze'] = { xSplit: 0, ySplit: 1 };
 }
 
 // ── TOAST ──
@@ -579,4 +596,3 @@ window.toast = toast;
 
 </body>
 </html>
-
